@@ -95,8 +95,9 @@ const generateEdit = async (instruction) => {
 }
 
 const generate = async () => {
+  console.log(import.meta.env)
   isLoading.value = true;
-  let res = await axios.post('http://localhost:8000/api/generate', { prompt: computedPrompt.value  });
+  let res = await axios.post(`${import.meta.env.VITE_API_ENDPOINT}generatetext`, { prompt: computedPrompt.value  });
   console.log(res);
   generated.value = res.data;
   quill.value.setHTML(res.data.trim());
