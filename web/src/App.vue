@@ -19,7 +19,7 @@
               </TransitionChild>
               <div class="flex flex-shrink-0 items-center px-4">
                 <!-- <img class="h-8 w-auto" src="https://tailwindui.com/img/logos/mark.svg?color=purple&shade=500" alt="Nonlinear StoryGen" /> -->
-                <img class="h-8 w-auto" src="@/assets/NLS_LOGO_ONLY.png" alt="Nonlinear StoryGen" />
+                <img class="h-8 w-auto" src="@/assets/coupla_logo.png" alt="Nonlinear StoryGen" />
               </div>
               <div class="mt-5 h-0 flex-1 overflow-y-auto">
                 <nav class="px-2">
@@ -53,8 +53,7 @@
     <div class="hidden z-40 lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-gray-100 lg:pt-5 lg:pb-4">
       <div class="flex flex-shrink-0 items-center px-6">
         <!-- <img class="h-8 w-auto" src="https://tailwindui.com/img/logos/mark.svg?color=purple&shade=500" alt="Your Company" /> -->
-        <img class="h-8 w-auto"  src="@/assets/NLS_LOGO_ONLY.png" alt="Nonlinear StoryGen" />
-        <span class="text-gray-400 text-xl ml-4">StoryGen</span>
+        <img class="ml-10 h-10 w-auto" src="@/assets/coupla_logo.png" alt="Nonlinear StoryGen" />
       </div>
       <!-- Sidebar component, swap this element with another sidebar if you like -->
       <div class="mt-5 flex h-0 flex-1 flex-col overflow-y-auto pt-1">
@@ -65,10 +64,10 @@
               <span class="flex w-full items-center justify-between">
                 <span class="flex min-w-0 items-center justify-between space-x-3">
                   <!-- <img class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-300" src="https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=3&w=256&h=256&q=80" alt="" /> -->
-                  <img class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-300" src="@/assets/headshot.webp" alt="" />
+                  <img class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-300" :src="user.picture" alt="" />
                   <span class="flex min-w-0 flex-1 flex-col">
-                    <span class="truncate text-sm font-medium text-gray-900">Isaac Monteath</span>
-                    <span class="truncate text-sm text-gray-500">Nonlinear Solutions</span>
+                    <span class="truncate text-sm font-medium text-gray-900">{{ user.given_name }} {{ user.family_name }}</span>
+                    <span class="truncate text-sm text-gray-500">{{ user.email }}</span>
                   </span>
                 </span>
                 <ChevronUpDownIcon class="h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
@@ -98,7 +97,7 @@
               </div>
               <div class="py-1">
                 <MenuItem v-slot="{ active }">
-                  <a href="#" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Logout</a>
+                  <a href="#" @click="logoutFn()" :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Logout</a>
                 </MenuItem>
               </div>
             </MenuItems>
@@ -186,8 +185,7 @@
             <h1 class="text-lg font-medium leading-6 text-gray-900 sm:truncate">Home</h1>
           </div>
           <div class="mt-4 flex sm:mt-0 sm:ml-4">
-            <button type="button" class="sm:order-0 order-1 ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:ml-0">Share</button>
-            <button type="button" class="order-0 inline-flex items-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:order-1 sm:ml-3">Create</button>
+            <a v-if="!isAuthenticated" @click="signIn()" type="button" class="order-0 inline-flex items-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:order-1 sm:ml-3">Login</a>
           </div>
         </div>
 
@@ -200,7 +198,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import * as msal from "@azure/msal-browser";
+import { ref, onMounted } from 'vue'
 import {
   Dialog,
   DialogPanel,
@@ -214,6 +213,135 @@ import {
 import { Bars3CenterLeftIcon, Bars4Icon, ClockIcon, HomeIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { ChevronRightIcon, ChevronUpDownIcon, EllipsisVerticalIcon, MagnifyingGlassIcon } from '@heroicons/vue/20/solid'
 import { RouterLink, RouterView } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue';
+const { loginWithRedirect, user, isAuthenticated, logout, getAccessTokenSilently } = useAuth0();
+
+let username = "";
+
+// setup auth
+const msalConfig = {
+    auth: {
+        // 'Application (client) ID' of app registration in Azure portal - this value is a GUID
+        clientId: "f8c3e04a-3a89-431c-bad7-4c80895ab5eb",
+        // Full directory URL, in the form of https://login.microsoftonline.com/<tenant-id>
+        authority: "https://login.microsoftonline.com/93567086-a4fa-40fb-8aa3-4bfb7646dfef",
+        // Full redirect URL, in form of http://localhost:3000
+        redirectUri: "http://localhost:5173/",
+    },
+    cache: {
+        cacheLocation: "sessionStorage", // This configures where your cache will be stored
+        storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
+    },
+    system: {	
+        loggerOptions: {	
+            loggerCallback: (level, message, containsPii) => {	
+                if (containsPii) {		
+                    return;		
+                }		
+                switch (level) {		
+                    case msal.LogLevel.Error:		
+                        console.error(message);		
+                        return;		
+                    case msal.LogLevel.Info:		
+                        console.info(message);		
+                        return;		
+                    case msal.LogLevel.Verbose:		
+                        console.debug(message);		
+                        return;		
+                    case msal.LogLevel.Warning:		
+                        console.warn(message);		
+                        return;		
+                }	
+            }	
+        }	
+    }
+};
+
+const loginRequest = {
+  scopes: ["User.ReadWrite"],
+};
+
+const tokenRequest = {
+    scopes: ["User.Read"],
+    forceRefresh: false // Set this to "true" to skip a cached token and go to the server to get a new token
+};
+
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+let accountId = null
+function handleResponse(response) {
+  if (response !== null) {
+    accountId = response.account.homeAccountId;
+    // Display signed-in user content, call API, etc.
+  } else {
+    // In case multiple accounts exist, you can select
+    const currentAccounts = msalInstance.getAllAccounts();
+
+    if (currentAccounts.length === 0) {
+      // no accounts signed-in, attempt to sign a user in
+      msalInstance.loginRedirect(loginRequest);
+    } else if (currentAccounts.length > 1) {
+      // Add choose account code here
+    } else if (currentAccounts.length === 1) {
+      accountId = currentAccounts[0].homeAccountId;
+      username = currentAccounts[0].username;
+      console.log(currentAccounts[0])
+    }
+  }
+
+  console.log(accountId)
+
+  getTokenRedirect(loginRequest)
+        .then(response => {
+          console.log("TK", response)
+            // callMSGraph(graphConfig.graphMeEndpoint, response.accessToken, console.log);
+        }).catch(error => {
+            console.error(error);
+        });
+}
+
+msalInstance.handleRedirectPromise().then(handleResponse);
+
+// msalInstance.handleRedirectPromise().then((tokenResponse) => {
+//   console.log("TK", tokenResponse)
+//     // Check if the tokenResponse is null
+//     // If the tokenResponse !== null, then you are coming back from a successful authentication redirect. 
+//     // If the tokenResponse === null, you are not coming back from an auth redirect.
+// }).catch((error) => {
+//     // handle error, either in the library or coming back from the server
+// });
+function signIn() {
+  // msalInstance.loginRedirect(loginRequest);
+  loginWithRedirect();
+}
+
+function logoutFn() {
+  logout({ returnTo: window.location.origin })
+}
+
+onMounted(() => {
+  // if (!isAuthenticated.value) {
+  //   signIn()
+  // }
+})
+
+function getTokenRedirect(request) {
+    /**
+     * See here for more info on account retrieval: 
+     * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-common/docs/Accounts.md
+     */
+    request.account = msalInstance.getAccountByUsername(username);
+
+    return msalInstance.acquireTokenSilent(request)
+        .catch(error => {
+            console.warn("silent token acquisition fails. acquiring token using redirect");
+            if (error instanceof msal.InteractionRequiredAuthError) {
+                // fallback to interaction when silent call fails
+                return msalInstance.acquireTokenRedirect(request);
+            } else {
+                console.warn(error);   
+            }
+        });
+}
 
 const navigation = [
   { name: 'Home', href: '#', icon: HomeIcon, current: true },

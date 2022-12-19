@@ -8,6 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-vue": "^1.0.2",
+    "@azure/msal-browser": "^2.32.1",
     "@headlessui/vue": "^1.7.4",
     "@heroicons/vue": "^2.0.13",
     "@vueup/vue-quill": "^1.0.0",

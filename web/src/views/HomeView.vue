@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import { useAuth0 } from '@auth0/auth0-vue';
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+const { getAccessTokenSilently } = useAuth0();
 
 const helperMode = ref(true);
 const contentTypes = ref({
@@ -97,7 +99,12 @@ const generateEdit = async (instruction) => {
 const generate = async () => {
   console.log(import.meta.env)
   isLoading.value = true;
-  let res = await axios.post(`${import.meta.env.VITE_API_ENDPOINT}generatetext`, { prompt: computedPrompt.value  });
+
+  // get an API access token
+  const token = await getAccessTokenSilently()
+  console.log(token);
+
+  let res = await axios.post(`${import.meta.env.VITE_API_ENDPOINT}generatetext`, { prompt: computedPrompt.value  }, { headers: { Authorization: `Bearer ${token}` } });
   console.log(res);
   generated.value = res.data;
   quill.value.setHTML(res.data.trim());
