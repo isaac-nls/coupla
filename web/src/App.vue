@@ -219,87 +219,87 @@ const { loginWithRedirect, user, isAuthenticated, logout, getAccessTokenSilently
 let username = "";
 
 // setup auth
-const msalConfig = {
-    auth: {
-        // 'Application (client) ID' of app registration in Azure portal - this value is a GUID
-        clientId: "f8c3e04a-3a89-431c-bad7-4c80895ab5eb",
-        // Full directory URL, in the form of https://login.microsoftonline.com/<tenant-id>
-        authority: "https://login.microsoftonline.com/93567086-a4fa-40fb-8aa3-4bfb7646dfef",
-        // Full redirect URL, in form of http://localhost:3000
-        redirectUri: "http://localhost:5173/",
-    },
-    cache: {
-        cacheLocation: "sessionStorage", // This configures where your cache will be stored
-        storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
-    },
-    system: {	
-        loggerOptions: {	
-            loggerCallback: (level, message, containsPii) => {	
-                if (containsPii) {		
-                    return;		
-                }		
-                switch (level) {		
-                    case msal.LogLevel.Error:		
-                        console.error(message);		
-                        return;		
-                    case msal.LogLevel.Info:		
-                        console.info(message);		
-                        return;		
-                    case msal.LogLevel.Verbose:		
-                        console.debug(message);		
-                        return;		
-                    case msal.LogLevel.Warning:		
-                        console.warn(message);		
-                        return;		
-                }	
-            }	
-        }	
-    }
-};
+// const msalConfig = {
+//     auth: {
+//         // 'Application (client) ID' of app registration in Azure portal - this value is a GUID
+//         clientId: "f8c3e04a-3a89-431c-bad7-4c80895ab5eb",
+//         // Full directory URL, in the form of https://login.microsoftonline.com/<tenant-id>
+//         authority: "https://login.microsoftonline.com/93567086-a4fa-40fb-8aa3-4bfb7646dfef",
+//         // Full redirect URL, in form of http://localhost:3000
+//         redirectUri: "http://localhost:5173/",
+//     },
+//     cache: {
+//         cacheLocation: "sessionStorage", // This configures where your cache will be stored
+//         storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
+//     },
+//     system: {	
+//         loggerOptions: {	
+//             loggerCallback: (level, message, containsPii) => {	
+//                 if (containsPii) {		
+//                     return;		
+//                 }		
+//                 switch (level) {		
+//                     case msal.LogLevel.Error:		
+//                         console.error(message);		
+//                         return;		
+//                     case msal.LogLevel.Info:		
+//                         console.info(message);		
+//                         return;		
+//                     case msal.LogLevel.Verbose:		
+//                         console.debug(message);		
+//                         return;		
+//                     case msal.LogLevel.Warning:		
+//                         console.warn(message);		
+//                         return;		
+//                 }	
+//             }	
+//         }	
+//     }
+// };
 
-const loginRequest = {
-  scopes: ["User.ReadWrite"],
-};
+// const loginRequest = {
+//   scopes: ["User.ReadWrite"],
+// };
 
-const tokenRequest = {
-    scopes: ["User.Read"],
-    forceRefresh: false // Set this to "true" to skip a cached token and go to the server to get a new token
-};
+// const tokenRequest = {
+//     scopes: ["User.Read"],
+//     forceRefresh: false // Set this to "true" to skip a cached token and go to the server to get a new token
+// };
 
-const msalInstance = new msal.PublicClientApplication(msalConfig);
-let accountId = null
-function handleResponse(response) {
-  if (response !== null) {
-    accountId = response.account.homeAccountId;
-    // Display signed-in user content, call API, etc.
-  } else {
-    // In case multiple accounts exist, you can select
-    const currentAccounts = msalInstance.getAllAccounts();
+// const msalInstance = new msal.PublicClientApplication(msalConfig);
+// let accountId = null
+// function handleResponse(response) {
+//   if (response !== null) {
+//     accountId = response.account.homeAccountId;
+//     // Display signed-in user content, call API, etc.
+//   } else {
+//     // In case multiple accounts exist, you can select
+//     const currentAccounts = msalInstance.getAllAccounts();
 
-    if (currentAccounts.length === 0) {
-      // no accounts signed-in, attempt to sign a user in
-      msalInstance.loginRedirect(loginRequest);
-    } else if (currentAccounts.length > 1) {
-      // Add choose account code here
-    } else if (currentAccounts.length === 1) {
-      accountId = currentAccounts[0].homeAccountId;
-      username = currentAccounts[0].username;
-      console.log(currentAccounts[0])
-    }
-  }
+//     if (currentAccounts.length === 0) {
+//       // no accounts signed-in, attempt to sign a user in
+//       msalInstance.loginRedirect(loginRequest);
+//     } else if (currentAccounts.length > 1) {
+//       // Add choose account code here
+//     } else if (currentAccounts.length === 1) {
+//       accountId = currentAccounts[0].homeAccountId;
+//       username = currentAccounts[0].username;
+//       console.log(currentAccounts[0])
+//     }
+//   }
 
-  console.log(accountId)
+//   console.log(accountId)
 
-  getTokenRedirect(loginRequest)
-        .then(response => {
-          console.log("TK", response)
-            // callMSGraph(graphConfig.graphMeEndpoint, response.accessToken, console.log);
-        }).catch(error => {
-            console.error(error);
-        });
-}
+//   getTokenRedirect(loginRequest)
+//         .then(response => {
+//           console.log("TK", response)
+//             // callMSGraph(graphConfig.graphMeEndpoint, response.accessToken, console.log);
+//         }).catch(error => {
+//             console.error(error);
+//         });
+// }
 
-msalInstance.handleRedirectPromise().then(handleResponse);
+// msalInstance.handleRedirectPromise().then(handleResponse);
 
 // msalInstance.handleRedirectPromise().then((tokenResponse) => {
 //   console.log("TK", tokenResponse)
@@ -311,37 +311,31 @@ msalInstance.handleRedirectPromise().then(handleResponse);
 // });
 function signIn() {
   // msalInstance.loginRedirect(loginRequest);
-  loginWithRedirect();
+  loginWithRedirect({ redirect_uri: window.location.origin });
 }
 
 function logoutFn() {
   logout({ returnTo: window.location.origin })
 }
 
-onMounted(() => {
-  // if (!isAuthenticated.value) {
-  //   signIn()
-  // }
-})
+// function getTokenRedirect(request) {
+//     /**
+//      * See here for more info on account retrieval: 
+//      * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-common/docs/Accounts.md
+//      */
+//     request.account = msalInstance.getAccountByUsername(username);
 
-function getTokenRedirect(request) {
-    /**
-     * See here for more info on account retrieval: 
-     * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-common/docs/Accounts.md
-     */
-    request.account = msalInstance.getAccountByUsername(username);
-
-    return msalInstance.acquireTokenSilent(request)
-        .catch(error => {
-            console.warn("silent token acquisition fails. acquiring token using redirect");
-            if (error instanceof msal.InteractionRequiredAuthError) {
-                // fallback to interaction when silent call fails
-                return msalInstance.acquireTokenRedirect(request);
-            } else {
-                console.warn(error);   
-            }
-        });
-}
+//     return msalInstance.acquireTokenSilent(request)
+//         .catch(error => {
+//             console.warn("silent token acquisition fails. acquiring token using redirect");
+//             if (error instanceof msal.InteractionRequiredAuthError) {
+//                 // fallback to interaction when silent call fails
+//                 return msalInstance.acquireTokenRedirect(request);
+//             } else {
+//                 console.warn(error);   
+//             }
+//         });
+// }
 
 const navigation = [
   { name: 'Home', href: '#', icon: HomeIcon, current: true },
